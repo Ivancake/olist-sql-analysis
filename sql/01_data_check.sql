@@ -25,7 +25,7 @@ SELECT min(order_purchase_timestamp) AS first_order,
 FROM orders;
 
 -- 4. Пропуски в датах
--- Итог: 2965 заказов без даты доставки (из них минимум 2 со статусом delivered),
+-- Итог: 2965 заказов без даты доставки (8 со статусом delivered),
 -- 160 заказов без даты подтверждения оплаты
 SELECT count(*) FILTER (WHERE order_delivered_customer_date IS NULL) AS no_delivery,
        count(*) FILTER (WHERE order_approved_at IS NULL) AS no_approval
