@@ -1,38 +1,57 @@
--- Проверка загрузки и качества данных Olist
+-- Проверка загрузки и качества данных Olist.
+-- Выполнять после 00_post_load.sql.
 
--- 1. Количество строк в таблицах
--- Ожидается: customers 99441, orders 99441, products 32951,
--- order_items 112650, order_payments 103886, category_translation 71
-SELECT 'customers' AS table_name, count(*) AS rows_cnt FROM customers
-UNION ALL SELECT 'orders', count(*) FROM orders
-UNION ALL SELECT 'products', count(*) FROM products
-UNION ALL SELECT 'order_items', count(*) FROM order_items
-UNION ALL SELECT 'order_payments', count(*) FROM order_payments
-UNION ALL SELECT 'category_translation', count(*) FROM category_translation
+-- 1. Количество строк в таблицах.
+-- Ожидается:
+-- customers            99441
+-- orders               99441
+-- products             32951
+-- order_items         112650
+-- order_payments      103886
+-- category_translation    73
+-- В справочник добавлены две категории без английского перевода.
+
+SELECT 'customers' AS table_name, COUNT(*) AS rows_cnt
+FROM customers
+UNION ALL
+SELECT 'orders', COUNT(*) FROM orders
+UNION ALL
+SELECT 'products', COUNT(*) FROM products
+UNION ALL
+SELECT 'order_items', COUNT(*) FROM order_items
+UNION ALL
+SELECT 'order_payments', COUNT(*) FROM order_payments
+UNION ALL
+SELECT 'category_translation', COUNT(*) FROM category_translation
 ORDER BY table_name;
 
--- 2. Распределение заказов по статусам
--- Итог: 97% заказов delivered (96478 из 99441)
-SELECT order_status, count(*) AS orders_cnt
+-- 2. Распределение заказов по статусам.
+SELECT
+    order_status,
+    COUNT(*) AS orders_cnt
 FROM orders
 GROUP BY order_status
 ORDER BY orders_cnt DESC;
 
--- 3. Период данных
--- Итог: 2016-09-04 — 2018-10-17; крайние месяцы неполные
-SELECT min(order_purchase_timestamp) AS first_order,
-       max(order_purchase_timestamp) AS last_order
+-- 3. Период данных.
+SELECT
+    MIN(order_purchase_timestamp) AS first_order,
+    MAX(order_purchase_timestamp) AS last_order
 FROM orders;
 
--- 4. Пропуски в датах
--- Итог: 2965 заказов без даты доставки (8 со статусом delivered),
--- 160 заказов без даты подтверждения оплаты
-SELECT count(*) FILTER (WHERE order_delivered_customer_date IS NULL) AS no_delivery,
-       count(*) FILTER (WHERE order_approved_at IS NULL) AS no_approval
+-- 4. Пропуски в датах.
+SELECT
+    COUNT(*) FILTER (
+        WHERE order_delivered_customer_date IS NULL
+    ) AS no_delivery,
+    COUNT(*) FILTER (
+        WHERE order_approved_at IS NULL
+    ) AS no_approval
 FROM orders;
 
--- 5. Доставленные заказы без даты доставки (аномалия)
-SELECT count(*) AS delivered_without_date
+-- 5. Доставленные заказы без даты доставки.
+SELECT
+    COUNT(*) AS delivered_without_date
 FROM orders
 WHERE order_status = 'delivered'
   AND order_delivered_customer_date IS NULL;
